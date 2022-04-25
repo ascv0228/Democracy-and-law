@@ -1,0 +1,116 @@
+int trigPin = 12;//超音波發送腳位
+int echoPin = 13; //超音波接收腳位
+int buttonPin = 2;//按鈕
+int L1 = 5; //左輪類比輸出
+int R1 = 6; //右輪類比輸出
+int L2 = 7;
+int R2 = 8;
+int w=11;
+int r=10;
+int g=9;
+long duration;
+long cm;
+long x = 1; //x用來儲存是否撞車
+int buttonPushCounter = 1; //紀錄按鈕被按了幾次
+int buttonState = 0; //按鈕的狀態
+int lastButtonState = 0; //上一次紀錄的按鈕狀態
+void setup()
+{
+  pinMode (L1, OUTPUT); //將1腳位設定為輸出
+  digitalWrite(L1, 0); //起始時為低電壓
+  pinMode (L2, OUTPUT) ;
+  digitalWrite(L2, 0);
+  pinMode (R1, OUTPUT);
+  digitalWrite(R1, 0);
+  pinMode (R2, OUTPUT);
+  digitalWrite(R2, 0);
+  pinMode(trigPin, OUTPUT);
+  pinMode (echoPin, INPUT);
+  digitalWrite(trigPin, LOW);
+  digitalWrite (echoPin, LOW);
+  pinMode (buttonPin, INPUT);
+  pinMode (w, OUTPUT); 
+  digitalWrite(w,  HIGH);
+  pinMode (r, OUTPUT); //
+  digitalWrite(r,  LOW);
+  pinMode (g, OUTPUT); 
+  digitalWrite(g,  LOW);
+}
+
+
+void loop() {
+  Distance();//執行判斷距離
+  if (cm < 5) x = 0; //如果撞車,將x設定為0
+  if (x == 0) return; //如果x為0,結束loop
+  buttonState = digitalRead(buttonPin);//讀取按鈕状態
+  if (buttonState != lastButtonState)
+    if (buttonState == HIGH) buttonPushCounter++;//計數一次
+
+  lastButtonState = buttonState;
+
+  if (buttonPushCounter % 2 == 1) { //判斷奇偶,奇數則關閉跟車模式
+    digitalWrite (L1, LOW) ;
+    digitalWrite (L2, LOW);
+    digitalWrite (R1, LOW);
+    digitalWrite (R2 , LOW) ;
+    digitalWrite (r, LOW);
+    digitalWrite (w,HIGH);
+    digitalWrite (g, LOW);
+  }
+  else {  //不是奇數,偶數開始跟車模式
+    if (cm < 20) //距離小於20cm停下
+    {
+      digitalWrite (L1, LOW);
+      digitalWrite (L2, LOW);
+      digitalWrite (R1, LOW);
+      digitalWrite (R2, LOW);
+      digitalWrite (r, HIGH);
+      digitalWrite (w, LOW);
+      digitalWrite (g, LOW);
+    }
+    else if (20 <= cm && cm < 40) //距離較近
+    {
+      analogWrite (L1, 50);
+      digitalWrite(L2, LOW);
+      analogWrite (R1, 50);
+      digitalWrite (R2 , LOW) ;
+      digitalWrite (r, LOW);
+      digitalWrite (w, LOW);
+      digitalWrite (g, HIGH);
+    }
+
+    else if (40 <= cm && cm < 60) //距離中等
+    {
+      analogWrite(L1, 100);
+      digitalWrite(L2, LOW);
+      analogWrite (R1, 100);
+      digitalWrite (R2, LOW);
+      digitalWrite (r, LOW);
+      digitalWrite (w, LOW);
+      digitalWrite (g, HIGH);
+    }
+    else//距離較遠
+    {
+      analogWrite(L1, 150);
+      digitalWrite(L2, LOW);
+      analogWrite (R1, 150);
+      digitalWrite (R2, LOW);
+      digitalWrite (r, LOW);
+      digitalWrite (w, LOW);
+      digitalWrite (g, HIGH);
+    }
+  }
+}
+
+void Distance()//判斷距離的主程式
+{
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(5);
+  digitalWrite(trigPin, HIGH); //給trig高電位,持續10微秒
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  pinMode(echoPin, INPUT);// 讀取echo的電位
+  duration = pulseIn(echoPin, HIGH); //收到高電位時的時間
+  cm = (duration / 2) / 29.1; //將時間換算成距離m
+  delay(10);
+}
